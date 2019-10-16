@@ -33,6 +33,24 @@ module PDF
         dictionary.data[:Contents] = Array(contents)
       end
 
+      # Prepend a content stream containing 'q',
+      # and append a content stream containing 'Q'.
+      # This ensures that prawn has a pristine graphics state
+      # before it starts adding content.
+      def wrap_graphics_state
+        dictionary.data[:Contents] = Array(dictionary.data[:Contents])
+
+        # Save graphics context
+        @content = document.ref({})
+        dictionary.data[:Contents].unshift(document.state.store[@content])
+        document.add_content 'q'
+
+        # Restore graphics context
+        @content = document.ref({})
+        dictionary.data[:Contents] << document.state.store[@content]
+        document.add_content 'Q'
+      end
+
       # As per the PDF spec, each page can have multiple content streams. This
       # will add a fresh, empty content stream this the page, mainly for use in
       # loading template files.
